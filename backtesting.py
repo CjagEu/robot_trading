@@ -1,102 +1,101 @@
-from robot_config.config import api_key
+from robot_config.config import api_key, secret_key
 from binance.client import Client
-from time import strftime, localtime, sleep
 import pandas as pd
 
 
 def get_velas(symbol, intervalo, tiempo_atras):
-    df = pd.DataFrame(client.get_historical_klines(symbol, intervalo,tiempo_atras + ' ago UTC'))  # Velas diarias del año pasado
-    df = df.iloc[:,:6]
-    df.columns = ['Time','Open','High','Low','Close','Volume']
+    df = pd.DataFrame(client.get_historical_klines(symbol, intervalo, tiempo_atras + ' ago UTC'))  # Velas diarias del año pasado
+    df = df.iloc[:, :6]
+    df.columns = ['Time', 'Open', 'High', 'Low', 'Close', 'Volume']
     df = df.set_index('Time')
-    df.index = pd.to_datetime(df.index+3600000, unit='ms')
+    df.index = pd.to_datetime(df.index, unit='ms')
     df = df.astype(float)
     return df
 
 
+def mostrarTradesEjecutados(lista_entrada, lista_salida, lista_beneficio):
+    for i in range(0, len(lista_entrada)):
+        print('Dia ' + str(i) + ' ' + str(lista_entrada[i]) + ' entró')
+        print('Dia ' + str(i) + ' ' + str(lista_salida[i]) + ' salió       Profit: ' + str(lista_beneficio[i]) + '\n')
 
-def mostrarTradesEjecutados(listaEntrada, listaSalida, listaBeneficio):
-    for i in range(0, len(listaEntrada)):
-        print('Dia ' + str(i) + ' ' + str(listaEntrada[i]) + ' entró')
-        print('Dia ' + str(i) + ' ' + str(listaSalida[i]) + ' salió       Profit: ' + str(listaBeneficio[i]) + '\n')
 
-
-def getTablaTrades(listaEntrada, listaSalida, listaBeneficio):
+def getTablaTrades(lista_entrada, lista_salida, lista_beneficio):
 
     dft = pd.DataFrame()
-    dft['Compra'] = pd.Series(listaEntrada)
-    dft['Venta'] = pd.Series(listaSalida)
-    dft ['Beneficio'] = pd.Series(listaBeneficio)
+    dft['Compra'] = pd.Series(lista_entrada)
+    dft['Venta'] = pd.Series(lista_salida)
+    dft['Beneficio'] = pd.Series(lista_beneficio)
     
     print(dft)
 
-def mostrarResultados(nCompras, nVentas, nVecesNoEntro, nVecesNoSalio, nTOTAL, listaBeneficios):
+
+def mostrarResultados(n_compras, n_ventas, n_veces_no_entro, n_veces_no_salio, n_total, lista_beneficios):
     print('**************************************************************************')
-    print('Numero compras: ' + str(nCompras))
-    print('Numero ventas: ' + str(nVentas))
-    print('Numero de veces que no entró: ' + str(nVecesNoEntro))
-    print('Numero de veces que no salió: ' + str(nVecesNoSalio))
-    print('Total velas: ' + str(nVecesNoSalio+nVecesNoEntro+nCompras+1)) #para comprobar que se procesaron todas las velas (el +1 es por la primera fila que son los labels)
-    print('nTOTAL: ' + str(nTOTAL))
-    print('USDT de BENEFICIO (total sin contar las comisiones): ' + str(sum(listaBeneficios)))
+    print('Numero compras: ' + str(n_compras))
+    print('Numero ventas: ' + str(n_ventas))
+    print('Numero de veces que no entró: ' + str(n_veces_no_entro))
+    print('Numero de veces que no salió: ' + str(n_veces_no_salio))
+    print('Total velas: ' + str(n_veces_no_salio+n_veces_no_entro+n_compras+1)) # para comprobar que se procesaron todas las velas (el +1 es por la primera fila que son los labels)
+    print('nTOTAL: ' + str(n_total))
+    print('USDT de BENEFICIO (total sin contar las comisiones): ' + str(sum(lista_beneficios)))
     print('**************************************************************************')
 
 
-def mostrarBalanceResultados(balanceResultados, lista_intervalos):
-    for i in range(0,len(balanceResultados)):
-        print('Profit  ('+lista_intervalos[i]+') :   ' + '{:.2f}'.format(balanceResultados[i]))
+def mostrarBalanceResultados(balance_resultados, lista_intervalos):
+    for i in range(len(balance_resultados)):
+        print('Profit  ('+lista_intervalos[i]+') :   ' + '{:.2f}'.format(balance_resultados[i]))
     
 
-def algoritmo_trading(df, balanceResultados):
+def algoritmo_trading(df, balance_resultados):
 
     qUSDT = 100  
-    nCompras = 0
-    nVentas = 0
-    nVecesNoEntro = 0
-    nVecesNoSalio = 0
-    nTOTAL = 0
-    listaBeneficios = []
-    listaFechasEntrada = []
-    listaFechasSalida = []
-    qEntrada = 0
-    precioEntrada = 0
+    n_compras = 0
+    n_ventas = 0
+    n_veces_no_entro = 0
+    n_veces_no_salio = 0
+    n_total = 0
+    lista_beneficios = []
+    lista_fechas_entrada = []
+    lista_fechas_salida = []
+    q_entrada = 0
+    precio_entrada = 0
     open_position = False
 
     for i in range(0, len(df)):
-            if not open_position:
-                if df.iloc[i].FastSMA > df.iloc[i].SlowSMA:
-                    nCompras += 1
-                    nTOTAL += 1
-                    #print('ENTRÓ UNA ORDEN DE COMPRA')
-                    qEntrada = qUSDT / df.iloc[i].Close
-                    precioEntrada = df.iloc[i].Close
-                    listaFechasEntrada.append(df.index[i])
-                    open_position = True
-                else:
-                    #print('NO ENTRÓ PORQUE LA CONDICIÓN NO SE CUMPLE')
-                    nVecesNoEntro += 1
-                    nTOTAL += 1
+        if not open_position:
+            if df.iloc[i].FastSMA > df.iloc[i].SlowSMA:
+                n_compras += 1
+                n_total += 1
+                # print('ENTRÓ UNA ORDEN DE COMPRA')
+                q_entrada = qUSDT / df.iloc[i].Close
+                precio_entrada = df.iloc[i].Close
+                lista_fechas_entrada.append(df.index[i])
+                open_position = True
             else:
-                #print('NO SALIÓ PORQUE LA CONDICIÓN NO SE CUMPLE')
-                nVecesNoSalio += 1
-                nTOTAL += 1
-                if df.iloc[i].SlowSMA > df.iloc[i].FastSMA:
-                    nVentas += 1
-                    nTOTAL += 1
-                    #print('ENTRÓ UNA ORDEN DE VENTA')
-                    listaBeneficios.append((df.iloc[i].Close * qEntrada) - qUSDT)
-                    listaFechasSalida.append(df.index[i])
-                    open_position = False
+                # print('NO ENTRÓ PORQUE LA CONDICIÓN NO SE CUMPLE')
+                n_veces_no_entro += 1
+                n_total += 1
+        else:
+            # print('NO SALIÓ PORQUE LA CONDICIÓN NO SE CUMPLE')
+            n_veces_no_salio += 1
+            n_total += 1
+            if df.iloc[i].SlowSMA > df.iloc[i].FastSMA:
+                n_ventas += 1
+                n_total += 1
+                # print('ENTRÓ UNA ORDEN DE VENTA')
+                lista_beneficios.append((df.iloc[i].Close * q_entrada) - qUSDT)
+                lista_fechas_salida.append(df.index[i])
+                open_position = False
     
-    balanceResultados.append(sum(listaBeneficios))
-    mostrarResultados(nCompras, nVentas, nVecesNoEntro, nVecesNoSalio, nTOTAL, listaBeneficios)
-    getTablaTrades(listaFechasEntrada, listaFechasSalida, listaBeneficios)
+    balance_resultados.append(sum(lista_beneficios))
+    mostrarResultados(n_compras, n_ventas, n_veces_no_entro, n_veces_no_salio, n_total, lista_beneficios)
+    getTablaTrades(lista_fechas_entrada, lista_fechas_salida, lista_beneficios)
 
 
 def backtesting(symbol, tiempo_atras):
 
-    lista_intervalos = ['1d','4h','1h','30m','15m','5m']
-    balanceResultados = []
+    lista_intervalos = ['1d', '4h', '1h', '30m', '15m', '5m']
+    balance_resultados = []
 
     for intervalo in lista_intervalos:
         print(str(symbol) + '   ' + intervalo)
@@ -105,40 +104,27 @@ def backtesting(symbol, tiempo_atras):
         df['SlowSMA'] = df.Close.rolling(25).mean()
         df = df.dropna()
         df.to_csv('tablas_backtesting_csv/velas'+intervalo+'.csv')
-        algoritmo_trading(df, balanceResultados)
+        algoritmo_trading(df, balance_resultados)
     
-    mostrarBalanceResultados(balanceResultados, lista_intervalos)
+    mostrarBalanceResultados(balance_resultados, lista_intervalos)
 
-    #intervaloAPreguntar = input('Ver trades de intervalo: (0 para ninguno)').lower()
-    #if intervaloAPreguntar != 0:
-        #mostrarTradesDFT(dft)
+    # intervaloAPreguntar = input('Ver trades de intervalo: (0 para ninguno)').lower()
+    # if intervaloAPreguntar != 0:
+    #   mostrarTradesDFT(dft)
 
 
-client = Client(api_key, api_secret) 
+client = Client(api_key, secret_key)
 
 # Pedir solo un intervalo
-#symbol = input('Moneda: ').upper()
-#intervalo = input('Intervalo de tiempo: ')
-#df = getVelasUltimoAnio(symbol, intervalo)
-#faltan mas cosas
+# symbol = input('Moneda: ').upper()
+# intervalo = input('Intervalo de tiempo: ')
+# df = getVelasUltimoAnio(symbol, intervalo)
+# faltan mas cosas
 
 # Dar todos los intervalos
-symbol = input('Moneda: ').upper()
-tiempo_atras = input('Desde cuando [x week, x month, x year]: ')
-backtesting(symbol, tiempo_atras)
-
-
-
-#TODO
-
-
-
-
-
-
-
-
-
+moneda = input('Moneda: ').upper()
+tiempo = input('Desde cuando [x week, x month, x year]: ')
+backtesting(moneda, tiempo)
 
 
 """

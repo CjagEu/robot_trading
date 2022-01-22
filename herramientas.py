@@ -1,5 +1,3 @@
-import sys
-sys.path.append('../')
 from robot_config.config import api_key, secret_key
 from binance.client import Client
 from binance.exceptions import BinanceAPIException
@@ -7,9 +5,9 @@ from time import strftime, localtime, sleep
 import pandas as pd
 
 
-#Conexión con Binance API
-client = Client(api_key,secret_key)
-#-------------------------------------------------------------------------------------------------------------------
+# Conexión con Binance API
+client = Client(api_key, secret_key)
+# -------------------------------------------------------------------------------------------------------------------
 """
     Obtiene datos sobre una moneda proveniente del exchange (valores OHLCV)
 
@@ -22,15 +20,15 @@ client = Client(api_key,secret_key)
 """
 def obtener_velas(symbol):
     try:
-        df = pd.DataFrame(client.get_historical_klines(symbol, '1m','40m UTC'))
+        df = pd.DataFrame(client.get_historical_klines(symbol, '1m', '40m UTC'))
     except BinanceAPIException as e:
         print(e)
         sleep(60)
-        df = pd.DataFrame(client.get_historical_klines(symbol, '1m','40m UTC'))
-    df = df.iloc[:,:6]
-    df.columns = ['Time','Open','High','Low','Close','Volume']
+        df = pd.DataFrame(client.get_historical_klines(symbol, '1m', '40m UTC'))
+    df = df.iloc[:, :6]
+    df.columns = ['Time', 'Open', 'High', 'Low', 'Close', 'Volume']
     df = df.set_index('Time')
-    df.index = pd.to_datetime(df.index+3600000, unit='ms')
+    df.index = pd.to_datetime(df.index, unit='ms')
     df = df.astype(float)
     return df
 
@@ -47,15 +45,15 @@ def obtener_ordenes_abiertas_df():
     lista_monedas = obtener_mis_monedas_lista()
     if lista_monedas == []:
         return pd.DataFrame()           # Devuelvo dataframe vacío, para devolver un dataframe en cualquier caso
-    lista_ordenes_todas = pd.DataFrame(columns = ['Symbol', 'Precio', 'qCripto','Side'])
+    lista_ordenes_todas = pd.DataFrame(columns=['Symbol', 'Precio', 'qCripto', 'Side'])
     for moneda in lista_monedas:
         if moneda != 'USDT':
-            orders = client.get_open_orders(symbol=moneda+'USDT')       #Constante USDT
+            orders = client.get_open_orders(symbol=moneda+'USDT')       # Constante USDT
             if orders == []:
                 return []          # Devuelvo lista vacía
             ordenes_abiertas = pd.DataFrame(orders)
-            ordenes_abiertas = ordenes_abiertas.iloc[:,[0,4,5,11]]
-            ordenes_abiertas.columns = ['Symbol', 'Precio', 'qCripto','Side']
+            ordenes_abiertas = ordenes_abiertas.iloc[:, [0, 4, 5, 11]]
+            ordenes_abiertas.columns = ['Symbol', 'Precio', 'qCripto', 'Side']
             lista_ordenes_todas = pd.concat([lista_ordenes_todas, ordenes_abiertas])
     
     return lista_ordenes_todas
@@ -76,19 +74,19 @@ def obtener_mis_trades_df():
     lista_monedas = obtener_mis_monedas_lista()
     if lista_monedas == []:
         return pd.DataFrame()           # Devuelvo dataframe vacío, para devolver un dataframe en cualquier caso
-    lista_trades_todos = pd.DataFrame(columns = ['Symbol', 'Precio', 'qCripto','qUSDT','Comision','MonedaComision','Hora','Buy','Sell'])
+    lista_trades_todos = pd.DataFrame(columns=['Symbol', 'Precio', 'qCripto', 'qUSDT', 'Comision', 'MonedaComision', 'Hora', 'Buy', 'Sell'])
     lista_trades_todos = lista_trades_todos.set_index('Hora')
     print(lista_trades_todos)
     for moneda in lista_monedas:
         if moneda != 'USDT':
             lista_trades = client.get_my_trades(symbol=moneda+'USDT')
             trades = pd.DataFrame(lista_trades)
-            trades = trades.iloc[:,[0,4,5,6,7,8,9,10,11]]
-            trades.columns = ['Symbol', 'Precio', 'qCripto','qUSDT','Comision','MonedaComision','Hora','Buy','Sell']
+            trades = trades.iloc[:, [0, 4, 5, 6, 7, 8, 9, 10, 11]]
+            trades.columns = ['Symbol', 'Precio', 'qCripto', 'qUSDT', 'Comision', 'MonedaComision', 'Hora', 'Buy', 'Sell']
             trades = trades.set_index('Hora')
-            trades.index = pd.to_datetime(trades.index+3600000, unit='ms')
+            trades.index = pd.to_datetime(trades.index, unit='ms')
             lista_trades_todos = pd.concat([lista_trades_todos, trades])
-    lista_trades_todos.sort_values(by = 'Hora', inplace=True)
+    lista_trades_todos.sort_values(by='Hora', inplace=True)
     return lista_trades_todos
 
 
@@ -104,7 +102,7 @@ def obtener_mis_monedas_lista():
     mis_monedas = pd.DataFrame(client.get_account().get('balances'))
     mis_monedas.columns = ['Asset', 'Libre', 'Posicionado']
     lista_mis_monedas = []
-    for i in range(0,len(mis_monedas)):
+    for i in range(len(mis_monedas)):
         if float(mis_monedas.Libre[i]) != 0 or float(mis_monedas.Posicionado[i]) != 0:
             lista_mis_monedas.append(mis_monedas.Asset[i])
     return lista_mis_monedas
@@ -142,7 +140,7 @@ def obtener_qty_cripto(cantidad_USDT, precio):
 def obtener_porcentaje_ganancia(numero):
     if numero <= 0.1:
         raise ValueError('Porcentaje debe ser un float positivo')
-    return (numero)/100 + 1
+    return numero/100 + 1
 
 
 """
@@ -158,10 +156,10 @@ def obtener_porcentaje_ganancia(numero):
 def consultar_ultima_posicion(symbol):
     lista_trades = client.get_my_trades(symbol=symbol)
     trades = pd.DataFrame(lista_trades)
-    trades = trades.iloc[:,[0,4,5,6,7,8,9,10,11]]
-    trades.columns = ['Symbol', 'Precio', 'qCripto','qUSDT','Comision','MonedaComision','Hora','Buy','Sell']
+    trades = trades.iloc[:, [0, 4, 5, 6, 7, 8, 9, 10, 11]]
+    trades.columns = ['Symbol', 'Precio', 'qCripto', 'qUSDT', 'Comision', 'MonedaComision', 'Hora', 'Buy', 'Sell']
     trades = trades.set_index('Hora')
-    trades.index = pd.to_datetime(trades.index+3600000, unit='ms')
+    trades.index = pd.to_datetime(trades.index, unit='ms')
     if trades.Buy[-1] or (trades.Buy[-1] and trades.Sell[-1]):
         return True     # Buy   
     return False        # Sell  
@@ -181,7 +179,7 @@ def consultar_ordenes_abiertas(lista_monedas):
     for moneda in lista_monedas:
         if moneda != 'USDT':
             orders = client.get_open_orders(symbol=moneda+'USDT')   # Cuidado constante USDT, no existe el par USDTUSDT
-            if(len(orders) > 0):
+            if len(orders) > 0:
                 return True
     return False
 
@@ -205,11 +203,11 @@ def mostrar_info_salida_mercado(symbol, ultimo_precio, buyprice, porcentaje_gana
     Muestra por pantalla información 
 """
 def mostrar_info_entrada_mercado(symbol, ultimo_precio, penultimo_precio):
-        print('Esperando para entrar... ' + '(' + symbol + ')   ' +
-         'Precio Actual: '  + '{:.8f}'.format(ultimo_precio) + '  ' + 
-         'Cierre última vela: ' + '{:.8f}'.format(penultimo_precio) + '     ' +
-         strftime("%H:%M:%S", localtime()) 
-         )
+    print('Esperando para entrar... ' + '(' + symbol + ')   ' +
+        'Precio Actual: '  + '{:.8f}'.format(ultimo_precio) + '  ' +
+        'Cierre última vela: ' + '{:.8f}'.format(penultimo_precio) + '     ' +
+         strftime("%H:%M:%S", localtime())
+          )
 
 
 """
@@ -241,5 +239,5 @@ def introducir_parametros():
     qUSDT = float(input('qUSDT: '))
     porcentaje_ganancia = float(input(" '%' Ganancia por Trade (número mayor que 0.1): "))
     symbol = criptomoneda+'USDT'
-    open_position = consultar_ultima_posicion(symbol)       #True = Ultima vez compré
+    open_position = consultar_ultima_posicion(symbol)       # True = Ultima vez compré
     return symbol, qUSDT, obtener_porcentaje_ganancia(porcentaje_ganancia), open_position

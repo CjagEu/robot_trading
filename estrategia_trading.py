@@ -21,12 +21,12 @@ def estrategia_trading(symbol, qty, porcentaje_ganancia, open_position):
         if not open_position:
             if df.Close[-3] - df.Close[-2] < 0:
                 cantidad_a_comprar = obtener_qty_cripto(qty, df.Close[-1])
-                #order = client.create_order(symbol=symbol,side='BUY',type='MARKET',quantity=qty)
-                    #order = client.order_market_buy(symbol=symbol,quoteOrderQty=qty)
-                    #print('\n' + order + '\n')
+                # order = client.create_order(symbol=symbol,side='BUY',type='MARKET',quantity=qty)
+                # order = client.order_market_buy(symbol=symbol,quoteOrderQty=qty)
+                # print('\n' + order + '\n')
                 open_position = True
-                    #buyprice = float(order['fills'][0]['price'])       
-                    #comision = float(order['fills'][2]['commission'])          #CREO QUE SERIA ASI
+                # buyprice = float(order['fills'][0]['price'])
+                # comision = float(order['fills'][2]['commission'])          #CREO QUE SERIA ASI
                 buyprice = df.Close[-1]
                 print('\nCompré ' + str(cantidad_a_comprar) + ' con ' + str(qty) + ' USDT a ' + '{:.8f}'.format(df.Close[-1]) + '\n')
                 break
@@ -36,11 +36,11 @@ def estrategia_trading(symbol, qty, porcentaje_ganancia, open_position):
             df = obtener_velas(symbol)
             mostrar_info_salida_mercado(symbol, df.Close[-1], buyprice, porcentaje_ganancia, qty, comision)
             if (df.Close[-1]) >= buyprice * porcentaje_ganancia:
-                #order = client.create_order(symbol=symbol,side='SELL',type='MARKET',quantity=qty)
-                    #order = client.order_market_sell(symbol=symbol, quoteOrderQty=qty)
-                    #print('\n' + order + '\n')
-                    #sellprice = float(order['fills'][0]['price'])
-                    #print(f'profit = {(sellprice - buyprice)/buyprice}' + '\n')           #Es del tio, lo puedo poner más bonito
+                # order = client.create_order(symbol=symbol,side='SELL',type='MARKET',quantity=qty)
+                # order = client.order_market_sell(symbol=symbol, quoteOrderQty=qty)
+                # print('\n' + order + '\n')
+                # sellprice = float(order['fills'][0]['price'])
+                # print(f'profit = {(sellprice - buyprice)/buyprice}' + '\n')           # Es del tio, lo puedo poner más bonito
                 open_position = False
                 print('\nVendí <cantidad_a_vender> a <sellprice>\n')
                 break
