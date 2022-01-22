@@ -1,4 +1,4 @@
-from robot_config.claves import api_key,api_secret
+from robot_config.config import api_key
 from binance.client import Client
 from time import strftime, localtime, sleep
 import pandas as pd

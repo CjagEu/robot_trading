@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../')
-from robot_config.claves import api_key,api_secret
+from robot_config.config import api_key, secret_key
 from binance.client import Client
 from binance.exceptions import BinanceAPIException
 from time import strftime, localtime, sleep
@@ -8,7 +8,7 @@ import pandas as pd
 
 
 #Conexión con Binance API
-client = Client(api_key,api_secret)
+client = Client(api_key,secret_key)
 #-------------------------------------------------------------------------------------------------------------------
 """
     Obtiene datos sobre una moneda proveniente del exchange (valores OHLCV)
