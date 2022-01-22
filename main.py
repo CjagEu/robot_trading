@@ -39,3 +39,5 @@ If you want to buy BTC with 6637 USDT, specify quoteOrderQty=6637 instead
 """
 
 #fees = client.get_trade_fee(symbol='BNBBTC')       lo dejo aquí para usarlo en la comison alomejors
+
+#prueba gitignore
