@@ -125,20 +125,3 @@ client = Client(api_key, secret_key)
 moneda = input('Moneda: ').upper()
 tiempo = input('Desde cuando [x week, x month, x year]: ')
 backtesting(moneda, tiempo)
-
-
-"""
-if not open_position:
-    if lastrow.FastSMA > lastrow.SlowSMA:
-        #order_buy
-        print("algo")
-        open_position = True
-    else:
-        print('no hemos entrado pero condicion no se cumple')
-else:
-    print('ya en posicion')
-    if lastrow.SlowSMA > lastrow.FastSMA:
-        #order_sell
-        print('algo')
-        open_position = False
-"""

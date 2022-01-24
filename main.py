@@ -1,3 +1,4 @@
+import herramientas
 from herramientas import *
 from estrategia_trading import estrategia_trading
 
@@ -16,6 +17,11 @@ while True:
         print('¡CUIDADO! Hay ordenes abiertas, ejecución abortada')
         break
     estrategia_trading(criptoMoneda, qty, porcentajeGanancia, open_position)
+
+
+
+
+
 
 # TODO MIRAR COMO FUNCIONA create_order en la doc oficial
 # TODO MIRAR COMO FUNCIONA LA VARIABLE FILLS DE ORDER

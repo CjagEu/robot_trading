@@ -61,6 +61,41 @@ def obtener_ordenes_abiertas_df():
 
 """
     Obtiene un dataframe con los datos de mis trades completados
+        de las monedas que tengo actualmente en la billetera
+        Si no tengo trades completados devuelve un DataFrame vacío
+        Si tengo trades completados devuelve un DataFrame con los datos
+
+        En columnas 'Buy' y 'Sell'
+            Buy=True AND Sell=True es orden de compra
+            Sell=False AND Sell=False es orden de venta
+
+    :returns: pd.DataFrame
+"""
+def obtener_mis_trades_monedas_billetera_df():
+    lista_monedas = obtener_mis_monedas_lista()
+    lista_trades_todos = pd.DataFrame(
+        columns=['Symbol', 'Precio', 'qCripto', 'qUSDT', 'Comision', 'MonedaComision', 'Hora', 'Buy', 'Sell'])
+    lista_trades_todos = lista_trades_todos.set_index('Hora')
+    for moneda in lista_monedas:
+        try:
+            lista_trades = client.get_my_trades(symbol=moneda + 'USDT')
+            if lista_trades:  # Distinto de []
+                trades = pd.DataFrame(lista_trades)
+                trades = trades.iloc[:, [0, 4, 5, 6, 7, 8, 9, 10, 11]]
+                trades.columns = ['Symbol', 'Precio', 'qCripto', 'qUSDT', 'Comision', 'MonedaComision', 'Hora', 'Buy',
+                                  'Sell']
+                trades = trades.set_index('Hora')
+                trades.index = pd.to_datetime(trades.index, unit='ms')
+                lista_trades_todos = pd.concat([lista_trades_todos, trades])
+        except BinanceAPIException:
+            continue
+    lista_trades_todos.sort_values(by='Hora', inplace=True)
+    return lista_trades_todos
+
+
+"""
+    Obtiene un dataframe con los datos de mis trades completados desde la creación de la cuenta
+        ¡Tarda 2 minutos en completarse!
         Si no tengo trades completados devuelve un DataFrame vacío
         Si tengo trades completados devuelve un DataFrame con los datos
         
@@ -70,22 +105,22 @@ def obtener_ordenes_abiertas_df():
 
     :returns: pd.DataFrame
 """
-def obtener_mis_trades_df():
-    lista_monedas = obtener_mis_monedas_lista()
-    if lista_monedas == []:
-        return pd.DataFrame()           # Devuelvo dataframe vacío, para devolver un dataframe en cualquier caso
+def obtener_mis_trades_historico_df():
+    lista_monedas = obtener_monedas_binance_lista()
     lista_trades_todos = pd.DataFrame(columns=['Symbol', 'Precio', 'qCripto', 'qUSDT', 'Comision', 'MonedaComision', 'Hora', 'Buy', 'Sell'])
     lista_trades_todos = lista_trades_todos.set_index('Hora')
-    print(lista_trades_todos)
     for moneda in lista_monedas:
-        if moneda != 'USDT':
+        try:
             lista_trades = client.get_my_trades(symbol=moneda+'USDT')
-            trades = pd.DataFrame(lista_trades)
-            trades = trades.iloc[:, [0, 4, 5, 6, 7, 8, 9, 10, 11]]
-            trades.columns = ['Symbol', 'Precio', 'qCripto', 'qUSDT', 'Comision', 'MonedaComision', 'Hora', 'Buy', 'Sell']
-            trades = trades.set_index('Hora')
-            trades.index = pd.to_datetime(trades.index, unit='ms')
-            lista_trades_todos = pd.concat([lista_trades_todos, trades])
+            if lista_trades:        # Distinto de []
+                trades = pd.DataFrame(lista_trades)
+                trades = trades.iloc[:, [0, 4, 5, 6, 7, 8, 9, 10, 11]]
+                trades.columns = ['Symbol', 'Precio', 'qCripto', 'qUSDT', 'Comision', 'MonedaComision', 'Hora', 'Buy', 'Sell']
+                trades = trades.set_index('Hora')
+                trades.index = pd.to_datetime(trades.index, unit='ms')
+                lista_trades_todos = pd.concat([lista_trades_todos, trades])
+        except BinanceAPIException:
+            continue
     lista_trades_todos.sort_values(by='Hora', inplace=True)
     return lista_trades_todos
 
@@ -106,6 +141,18 @@ def obtener_mis_monedas_lista():
         if float(mis_monedas.Libre[i]) != 0 or float(mis_monedas.Posicionado[i]) != 0:
             lista_mis_monedas.append(mis_monedas.Asset[i])
     return lista_mis_monedas
+
+
+"""
+    Obtiene una lista con las monedas que hay en Binance 
+        Se guarda el 'symbol'
+        
+    :returns: list
+"""
+def obtener_monedas_binance_lista():
+    monedas = pd.DataFrame(client.get_account().get('balances'))
+    monedas.columns = ['Asset', 'Libre', 'Posicionado']
+    return monedas['Asset'].tolist()
 
 
 """
