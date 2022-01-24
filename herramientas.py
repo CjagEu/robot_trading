@@ -18,7 +18,7 @@ client = Client(api_key, secret_key)
 
     :eleva: BinanceAPIException
 """
-def obtener_velas(symbol):
+def obtener_velas_df(symbol):
     try:
         df = pd.DataFrame(client.get_historical_klines(symbol, '1m', '40m UTC'))
     except BinanceAPIException as e:

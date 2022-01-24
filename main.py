@@ -1,3 +1,5 @@
+import pandas as pd
+
 import herramientas
 from herramientas import *
 from estrategia_trading import estrategia_trading
@@ -6,8 +8,7 @@ from estrategia_trading import estrategia_trading
 # criptoMoneda = 'BTCUSDT'
 # qty = 20.0
 # porcentajeGanancia = 2.00
-
-
+# open_position = consultar_ultima_posicion('BTCUSDT')
 
 # Pedir por pantalla parámetros
 criptoMoneda, qty, porcentajeGanancia, open_position = introducir_parametros()
@@ -17,9 +18,6 @@ while True:
         print('¡CUIDADO! Hay ordenes abiertas, ejecución abortada')
         break
     estrategia_trading(criptoMoneda, qty, porcentajeGanancia, open_position)
-
-
-
 
 
 
@@ -45,3 +43,4 @@ If you want to buy BTC with 6637 USDT, specify quoteOrderQty=6637 instead
 """
 
 # fees = client.get_trade_fee(symbol='BNBBTC')       lo dejo aquí para usarlo en la comison alomejors
+# comision = float(order['fills'][2]['commission'])          #CREO QUE SERIA ASI

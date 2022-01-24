@@ -16,7 +16,7 @@ from herramientas import *
 def estrategia_trading(symbol, qty, porcentaje_ganancia, open_position):
     print(symbol + '    ' + str(qty) + ' USDT    ' + str(porcentaje_ganancia) + '\n')
     while True:
-        df = obtener_velas(symbol)
+        df = obtener_velas_df(symbol)
         mostrar_info_entrada_mercado(symbol, df.Close[-1], df.Close[-2])
         if not open_position:
             if df.Close[-3] - df.Close[-2] < 0:
@@ -33,14 +33,18 @@ def estrategia_trading(symbol, qty, porcentaje_ganancia, open_position):
     if open_position:
         comision = (cantidad_a_comprar * 0.00075) * buyprice                 #Solo valido si la moneda es BNB, si no tengo que consultar el precioactual de BNB expresaente en teoria en real uso la linea 71
         while True:
-            df = obtener_velas(symbol)
-            mostrar_info_salida_mercado(symbol, df.Close[-1], buyprice, porcentaje_ganancia, qty, comision)
-            if (df.Close[-1]) >= buyprice * porcentaje_ganancia:
-                # order = client.create_order(symbol=symbol,side='SELL',type='MARKET',quantity=qty)
-                # order = client.order_market_sell(symbol=symbol, quoteOrderQty=qty)
-                # print('\n' + order + '\n')
-                # sellprice = float(order['fills'][0]['price'])
-                # print(f'profit = {(sellprice - buyprice)/buyprice}' + '\n')           # Es del tio, lo puedo poner más bonito
-                open_position = False
-                print('\nVendí <cantidad_a_vender> a <sellprice>\n')
+            if obtener_ordenes_abiertas_df() == []:     # Se puede simplificar, de momento veo mejor la expresión así
+                df = obtener_velas_df(symbol)
+                mostrar_info_salida_mercado(symbol, df.Close[-1], buyprice, porcentaje_ganancia, qty, comision)
+                if (df.Close[-1]) >= buyprice * porcentaje_ganancia:
+                    # order = client.create_order(symbol=symbol,side='SELL',type='MARKET',quantity=qty)
+                    # order = client.order_market_sell(symbol=symbol, quoteOrderQty=qty)
+                    # print('\n' + order + '\n')
+                    # sellprice = float(order['fills'][0]['price'])
+                    # print(f'profit = {(sellprice - buyprice)/buyprice}' + '\n')           # Es del tio, lo puedo poner más bonito
+                    open_position = False
+                    print('\nVendí <cantidad_a_vender> a <sellprice>\n')
+                    break
+            else:
+                open_position = False   # Si cierro posición manualmente (en la web)
                 break
