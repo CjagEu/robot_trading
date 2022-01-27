@@ -101,8 +101,6 @@ def obtener_mis_trades_historico_df():
     """
         Obtiene un dataframe con los datos de mis trades completados desde la creación de la cuenta
 
-        ¡Tarda 2 minutos en completarse!
-
         Si no tengo trades completados devuelve un DataFrame vacío
 
         Si tengo trades completados devuelve un DataFrame con los datos
@@ -136,7 +134,7 @@ def obtener_mis_trades_historico_df():
 
 def obtener_mis_monedas_lista():
     """
-        Obtiene una lista con las monedas que tengo
+        Obtiene una lista con las monedas que tengo actualmente en la billetera
 
         Se guarda el 'symbol'
 
@@ -157,14 +155,26 @@ def obtener_mis_monedas_lista():
 
 def obtener_monedas_binance_lista():
     """
-        Obtiene una lista con las monedas que hay en Binance
+        Obtiene una lista con las monedas que he tenido en algún momento
+
+        (está comentado el código para obtener todas las monedas de binance, tarda mucho en ejecutar)
+
         Se guarda el 'symbol'
 
         :returns: list
     """
-    monedas = pd.DataFrame(client.get_account().get('balances'))
-    monedas.columns = ['Asset', 'Libre', 'Posicionado']
-    return monedas['Asset'].tolist()
+    # monedas = pd.DataFrame(client.get_account().get('balances'))
+    # monedas.columns = ['Asset', 'Libre', 'Posicionado']
+    # return monedas['Asset'].tolist()
+    info = pd.DataFrame(client.get_account_snapshot(type='SPOT'))
+    info = info['snapshotVos'].iloc[-1]
+    info = pd.DataFrame(info['data'])
+    info = pd.DataFrame(info)
+
+    lista = []
+    for fila in range(len(info)):
+        lista.append((info['balances'].iloc[fila])['asset'])
+    return lista
 
 
 def obtener_qty_cripto(cantidad_USDT, precio):
