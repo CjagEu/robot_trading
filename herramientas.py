@@ -2,7 +2,11 @@ from robot_config.config import api_key, secret_key
 from binance.client import Client
 from binance.exceptions import BinanceAPIException
 from time import strftime, localtime, sleep
+from bs4 import BeautifulSoup
 import pandas as pd
+import requests
+
+
 
 
 # Conexión con Binance API
@@ -20,15 +24,15 @@ def obtener_velas_df(symbol):
         :eleva: BinanceAPIException
     """
     try:
-        df = pd.DataFrame(client.get_historical_klines(symbol, '1m', '40m UTC'))
+        df = pd.DataFrame(client.get_historical_klines(symbol, '1m', '60m UTC'))
     except BinanceAPIException as e:
         print(e)
         sleep(60)
-        df = pd.DataFrame(client.get_historical_klines(symbol, '1m', '40m UTC'))
+        df = pd.DataFrame(client.get_historical_klines(symbol, '1m', '60m UTC'))
     df = df.iloc[:, :6]
     df.columns = ['Time', 'Open', 'High', 'Low', 'Close', 'Volume']
     df = df.set_index('Time')
-    df.index = pd.to_datetime(df.index, unit='ms')
+    df.index = pd.to_datetime(df.index+3600000, unit='ms')
     df = df.astype(float)
     return df
 
@@ -317,3 +321,5 @@ def introducir_parametros():
     symbol = criptomoneda+'USDT'
     open_position = consultar_ultima_posicion(symbol)       # True = Ultima vez compré
     return symbol, qUSDT, obtener_porcentaje_ganancia(porcentaje_ganancia), open_position
+
+
