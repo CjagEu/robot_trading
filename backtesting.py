@@ -1,7 +1,43 @@
 from robot_config.config import api_key, secret_key
 from binance.client import Client
 import pandas as pd
+import ta
 
+
+def aplicar_indicadores(df):
+    #df['%K'] = ta.momentum.stoch(df.High, df.Low, df.Close, window=14, smooth_window=3)
+    #df['%D'] = df['%K'].rolling(3).mean()
+    #df['RSI'] = ta.momentum.rsi(df.Close, window=14)
+    #df['MACD'] = ta.trend.macd_diff(df.Close)
+    df['EMA18'] = ta.trend.ema_indicator(df.Close, window=18)
+    df['EMA28'] = ta.trend.ema_indicator(df.Close, window=28)
+    df['WMA5'] = ta.trend.wma_indicator(df.Close, window=5)
+    df['WMA12'] = ta.trend.wma_indicator(df.Close, window=12)
+    df['RSI'] = ta.momentum.rsi(df.Close, window=21)
+    df.dropna(inplace=True)
+    return df
+
+
+def condicion_entrada(ema18, ema28, wma5, wma12, rsi):
+    # WMA5 y WMA12 cruzan el túnel rojo hacia arriba
+    media_tunel_rojo = (ema18+ema28)/2
+    condicion_1 = (wma5 > media_tunel_rojo) & (wma12 > media_tunel_rojo)
+    # WMA5 cruza hacia arriba a WMA12 (señal fuerte)
+    condicion_2 = wma5 >= wma12
+    # RSI(21) debe ser mayor que 50 (señal de confirmación)
+    condicion_3 = rsi > 50
+    return condicion_1 & condicion_2 & condicion_3
+
+
+def condicion_salida(ema18, ema28, wma5, wma12, rsi):
+    # WMA5 y WMA12 cruzan el túnel rojo hacia abajo
+    media_tunel_rojo = (ema18 + ema28) / 2
+    condicion_1 = (wma5 < media_tunel_rojo) & (wma12 < media_tunel_rojo)
+    # WMA5 cruza hacia abajo a WMA12 (señal fuerte)
+    condicion_2 = wma5 <= wma12
+    # RSI(21) debe ser menor que 50 (señal de confirmación)
+    condicion_3 = rsi < 50
+    return condicion_1 & condicion_2 & condicion_3
 
 def get_velas(symbol, intervalo, tiempo_atras):
     df = pd.DataFrame(client.get_historical_klines(symbol, intervalo, tiempo_atras + ' ago UTC'))  # Velas diarias del año pasado
@@ -29,18 +65,6 @@ def getTablaTrades(lista_entrada, lista_salida, lista_beneficio):
     print(dft)
 
 
-def mostrarResultados(n_compras, n_ventas, n_veces_no_entro, n_veces_no_salio, n_total, lista_beneficios):
-    print('**************************************************************************')
-    print('Numero compras: ' + str(n_compras))
-    print('Numero ventas: ' + str(n_ventas))
-    print('Numero de veces que no entró: ' + str(n_veces_no_entro))
-    print('Numero de veces que no salió: ' + str(n_veces_no_salio))
-    print('Total velas: ' + str(n_veces_no_salio+n_veces_no_entro+n_compras+1)) # para comprobar que se procesaron todas las velas (el +1 es por la primera fila que son los labels)
-    print('nTOTAL: ' + str(n_total))
-    print('USDT de BENEFICIO (total sin contar las comisiones): ' + str(sum(lista_beneficios)))
-    print('**************************************************************************')
-
-
 def mostrarBalanceResultados(balance_resultados, lista_intervalos):
     for i in range(len(balance_resultados)):
         print('Profit  ('+lista_intervalos[i]+') :   ' + '{:.2f}'.format(balance_resultados[i]))
@@ -48,12 +72,7 @@ def mostrarBalanceResultados(balance_resultados, lista_intervalos):
 
 def algoritmo_trading(df, balance_resultados):
 
-    qUSDT = 100  
-    n_compras = 0
-    n_ventas = 0
-    n_veces_no_entro = 0
-    n_veces_no_salio = 0
-    n_total = 0
+    qUSDT = 100
     lista_beneficios = []
     lista_fechas_entrada = []
     lista_fechas_salida = []
@@ -63,32 +82,26 @@ def algoritmo_trading(df, balance_resultados):
 
     for i in range(0, len(df)):
         if not open_position:
-            if df.iloc[i].FastSMA > df.iloc[i].SlowSMA:
-                n_compras += 1
-                n_total += 1
+            if condicion_entrada(ema18=df.EMA18[i], ema28=df.EMA28[i], wma5=df.WMA5[i], wma12=df.WMA12[i], rsi=df.RSI[i]):
                 # print('ENTRÓ UNA ORDEN DE COMPRA')
                 q_entrada = qUSDT / df.iloc[i].Close
                 precio_entrada = df.iloc[i].Close
                 lista_fechas_entrada.append(df.index[i])
                 open_position = True
-            else:
-                # print('NO ENTRÓ PORQUE LA CONDICIÓN NO SE CUMPLE')
-                n_veces_no_entro += 1
-                n_total += 1
+            """else:
+                print('NO ENTRÓ PORQUE LA CONDICIÓN NO SE CUMPLE')"""
         else:
             # print('NO SALIÓ PORQUE LA CONDICIÓN NO SE CUMPLE')
-            n_veces_no_salio += 1
-            n_total += 1
-            if df.iloc[i].SlowSMA > df.iloc[i].FastSMA:
-                n_ventas += 1
-                n_total += 1
+            if condicion_salida(ema18=df.EMA18[i], ema28=df.EMA28[i],wma5= df.WMA5[i],wma12=df.WMA12[i], rsi=df.RSI[i]):
                 # print('ENTRÓ UNA ORDEN DE VENTA')
                 lista_beneficios.append((df.iloc[i].Close * q_entrada) - qUSDT)
                 lista_fechas_salida.append(df.index[i])
                 open_position = False
     
     balance_resultados.append(sum(lista_beneficios))
-    mostrarResultados(n_compras, n_ventas, n_veces_no_entro, n_veces_no_salio, n_total, lista_beneficios)
+    print('**************************************************************************')
+    print('USDT de BENEFICIO (total sin contar las comisiones): ' + str(sum(lista_beneficios)))
+    print('**************************************************************************')
     getTablaTrades(lista_fechas_entrada, lista_fechas_salida, lista_beneficios)
 
 
@@ -99,11 +112,8 @@ def backtesting(symbol, tiempo_atras):
 
     for intervalo in lista_intervalos:
         print(str(symbol) + '   ' + intervalo)
-        df = get_velas(symbol, intervalo, tiempo_atras) 
-        df['FastSMA'] = df.Close.rolling(7).mean()
-        df['SlowSMA'] = df.Close.rolling(25).mean()
-        df = df.dropna()
-        df.to_csv('tablas_backtesting_csv/velas'+intervalo+'.csv')
+        df = get_velas(symbol, intervalo, tiempo_atras)
+        aplicar_indicadores(df)
         algoritmo_trading(df, balance_resultados)
     
     mostrarBalanceResultados(balance_resultados, lista_intervalos)
